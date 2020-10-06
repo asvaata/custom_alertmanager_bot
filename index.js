@@ -41,21 +41,22 @@ app.post('/alerts/', async function(req, res) {
                 data
             })
 
-            if (error_regexp.test(data.labels.alertname)) {
+            if (error_regexp.test(data.labels.alertname) && process.env.JIRA_ENABLE == true) {
                 const id = await jira.new_issue(data)
                 new_alert.jira_id = id
             }
 
             await new_alert.save()
-        } 
+        }
 
         if (alert_in_base && active != alert_in_base.active && active == false) {
             alert_in_base.active = active
             alert_in_base.end_date = end_date
             await alert_in_base.save()
-            await jira.close_issue(alert_in_base.jira_id)
+            if (process.env.JIRA_ENABLE == true) {
+                await jira.close_issue(alert_in_base.jira_id)
+            }
         }
-
     }
     await send_to_telegram()
 
